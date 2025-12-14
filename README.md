@@ -1,153 +1,120 @@
-# Pollution Risk Analytics on AWS
+# Pollution Risk Analytics using AWS
 
 ## Project Overview
-This project implements a serverless data pipeline on Amazon Web Services (AWS) to analyze air pollution risk by combining **historical emissions data** with **near real-time air quality measurements**. The goal is to support environmental decision-making by identifying pollution hotspots, monitoring exposure trends, and enabling timely public health responses.
+This project implements a serverless data analytics pipeline on AWS to analyze air pollution risks using two independent data sources:
+- Historical air quality data (CSV)
+- Real-time air quality data via API (Open-Meteo Air Quality API)
 
-The solution integrates publicly available datasets, processes them using AWS-native services, and enables analytical queries through a scalable, low-cost architecture.
+The goal is to demonstrate how cloud-based data pipelines support environmental monitoring, risk detection, and data-driven decision-making at low cost and high scalability.
 
 ---
 
-## Stakeholders & Business Value
+## 1. Stakeholders & Business Value
 
 ### Target Stakeholders
-- Ministry of Environment and environmental regulators
-- Public health authorities
-- City and regional governments
-- Researchers and policy analysts
-- Citizens and non-governmental organizations (NGOs)
+- Ministry of Environment  
+- Public Health Agencies  
+- City Governments / Municipalities  
+- Researchers and NGOs  
+- Citizens  
+
+### Business Problem
+Air pollution causes serious health and environmental problems. Decision-makers often lack integrated historical and real-time data, making it difficult to identify pollution hotspots and react quickly.
 
 ### Business Value
-- Faster identification of pollution hotspots
-- Improved monitoring of population exposure to air pollutants
-- Evidence-based environmental policy and enforcement
-- Low-cost, scalable analytics infrastructure
-- Transparent and reproducible environmental data analysis
+- Identification of pollution hotspots
+- Health risk assessment using PM2.5 thresholds
+- Near real-time monitoring via API ingestion
+- Low-cost, serverless AWS architecture
+- Scalable solution for city or national deployment
 
 ---
 
-## Data Sources
-
-### 1. Real-Time Air Quality Data (OpenAQ)
-- Source: OpenAQ API
-- Format: JSON
-- Pollutants: PM2.5, PM10, NO₂, O₃, CO
-- Frequency: Near real-time
-- Use: Detection of current pollution levels and short-term risk
-
-Official documentation:  
-https://docs.openaq.org/
-
-### 2. Historical Emissions Data (EPA NEI)
-- Source: U.S. Environmental Protection Agency (EPA)
-- Dataset: National Emissions Inventory (NEI)
-- Format: CSV
-- Level: Facility-level annual emissions
-- Use: Identification of long-term pollution drivers
-
-Official download page:  
-https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei
-
----
-
-## Pipeline Architecture
+## 2. Pipeline Architecture & Costs
 
 ### Architecture Overview
-The project follows a serverless data lake architecture:
+```
+CSV Dataset ─────────────┐
+                          ├─ Amazon S3 (raw)
+API (Open-Meteo) → Lambda ─┘
+            ↓
+        AWS Glue Crawlers
+            ↓
+        AWS Glue Data Catalog
+            ↓
+        Amazon Athena
+            ↓
+        KPI Analysis
+```
 
-1. **Data Ingestion**
-   - OpenAQ data is retrieved using AWS Lambda via public API calls
-   - EPA NEI CSV data is uploaded to Amazon S3
+### AWS Services Used
+- Amazon S3 – data lake storage
+- AWS Lambda – API ingestion
+- AWS Glue – schema discovery and catalog
+- Amazon Athena – SQL analytics
 
-2. **Storage**
-   - Amazon S3 acts as the raw and curated data lake
+### Cost Estimation
+| Service | Estimated Monthly Cost |
+|------|------------------------|
+| Amazon S3 | <$1 |
+| AWS Lambda | ~$0 |
+| AWS Glue | <$1 |
+| Amazon Athena | <$1 |
+| **Total** | **~$2–$5/month** |
 
-3. **Processing & Transformation**
-   - AWS Glue Crawlers infer schemas
-   - AWS Glue ETL jobs clean, normalize, and join datasets
-
-4. **Analytics**
-   - Amazon Athena performs SQL-based analytical queries
-   - (Optional) Amazon QuickSight visualizes trends and hotspots
-
----
-
-## AWS Services Used
-
-| Service | Purpose |
-|------|--------|
-| Amazon S3 | Raw and curated data storage |
-| AWS Lambda | OpenAQ API ingestion |
-| AWS Glue | Data cataloging and ETL |
-| Amazon Athena | SQL analytics |
-| Amazon QuickSight | Visualization (optional) |
-| AWS IAM | Security and access control |
-
----
-
-## Cost Estimation (Monthly)
-
-| Service | Estimated Cost (USD) |
-|------|---------------------|
-| Amazon S3 | $0.50 |
-| AWS Lambda | $0.20 |
-| AWS Glue Crawlers | $0.45 |
-| AWS Glue ETL Jobs | $4.40 |
-| Amazon Athena | $0.50 |
-| Amazon QuickSight | $9.00 |
-| **Total** | **≈ $15–16** |
-
-This cost-efficient design supports continuous monitoring with minimal fixed expenses.
+This supports the business goal of affordable environmental monitoring.
 
 ---
 
-## Key Performance Indicators (KPIs)
+## 3. Key Performance Indicators (KPIs)
 
-1. **Alert Latency**  
-   Time between pollutant measurement ingestion and data availability for analysis.
+### KPI 1 – Average PM2.5 by City
+Identifies long-term pollution hotspots.
 
-2. **High-Risk Exposure Days**  
-   Number of days where pollutant levels exceed health-based thresholds.
+### KPI 2 – High-Risk Days (PM2.5 > 35 µg/m³)
+Measures frequency of unhealthy air quality days.
 
-3. **Hotspot Detection Rate**  
-   Count of cities or regions classified as high-risk within a given period.
+### KPI 3 – Real-Time Pollution Snapshot
+Provides current air quality conditions from API data.
 
-4. **Data Freshness**  
-   Time since the most recent air quality measurement ingestion.
-
----
-
-## Implementation Summary
-
-- OpenAQ data is ingested automatically using AWS Lambda and stored as raw JSON in S3
-- EPA NEI emissions data is uploaded as CSV to S3
-- AWS Glue Crawlers build the data catalog
-- AWS Glue ETL jobs normalize schemas and join datasets by city and time period
-- Amazon Athena enables analytical queries such as hotspot detection and trend analysis
+### KPI 4 – Data Freshness
+Confirms the pipeline is ingesting up-to-date data.
 
 ---
 
-## Results & Interpretation
+## 4. Implementation & Results
 
-The integrated dataset enables:
-- Identification of cities with consistently high pollution levels
-- Comparison of historical emission patterns with current air quality
-- Prioritization of high-risk locations for regulatory or public health action
+### Data Ingestion
+- CSV data uploaded to:
+  `s3://pollution-risk-analytics-adilet/raw/csv_air_quality/`
+- API data ingested via AWS Lambda and stored in:
+  `s3://pollution-risk-analytics-adilet/raw/api_air_quality/`
 
-The solution demonstrates how cloud-based analytics can support environmental monitoring and decision-making at low cost.
+### Data Processing & Querying
+- AWS Glue Crawlers create tables in `pollution_risk_db`
+- Amazon Athena used for all SQL queries and KPI calculations
+
+### Results Interpretation
+- Cities such as Dubai and Mumbai show high average PM2.5 levels
+- High-risk days highlight long-term health exposure
+- API results confirm real-time monitoring capability
+- Data freshness verifies pipeline reliability
 
 ---
 
-## Limitations & Future Improvements
+## 5. Repository & Collaboration
+- Documentation written entirely in Markdown
+- GitHub repository created and maintained
+- Contributors added:
+  - szabild@yahoo.com
+  - balint.matyus@gmail.com
 
-### Limitations
-- Emissions data is annual and not real-time
-- Risk scoring is a simplified proxy
-- Geographical matching is based on city-level aggregation
+---
 
-### Future Improvements
-- Integration of meteorological data (wind, temperature)
-- Advanced geospatial joins (geohash or H3)
-- Automated alerts using Amazon SNS
-- Infrastructure as Code (Terraform or AWS CDK)
+## 6. Slideshow Presentation
+A 10-minute presentation was created covering business need, architecture, KPIs, results, and business value, and uploaded to Moodle.
 
+---
 
+## Conclusion
+This project demonstrates a scalable, low-cost AWS-based pollution risk analytics solution using both historical and real-time data sources. It provides actionable insights for environmental and public health decision-making.
