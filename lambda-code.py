@@ -4,10 +4,8 @@ import boto3
 import urllib.request
 from datetime import datetime, timezone
 
-# Initialize S3 client
 s3 = boto3.client("s3")
 
-# Environment variables (set in Lambda configuration)
 BUCKET = os.environ["BUCKET"]
 LAT = float(os.environ.get("LAT", "47.4979"))   # Budapest default
 LON = float(os.environ.get("LON", "19.0402"))   # Budapest default
@@ -21,11 +19,9 @@ def lambda_handler(event, context):
         "&timezone=UTC"
     )
 
-    # Call API
     with urllib.request.urlopen(url, timeout=20) as response:
         payload = json.loads(response.read().decode("utf-8"))
 
-    # Extract current data
     current = payload.get("current", {})
 
     record = {
@@ -39,7 +35,6 @@ def lambda_handler(event, context):
         "source": "open-meteo"
     }
 
-    # Build S3 key
     now = datetime.now(timezone.utc)
     s3_key = (
         f"raw/api_air_quality/"
@@ -47,7 +42,6 @@ def lambda_handler(event, context):
         f"air_quality_{now.strftime('%H%M%S')}.json"
     )
 
-    # Upload to S3
     s3.put_object(
         Bucket=BUCKET,
         Key=s3_key,
@@ -59,4 +53,5 @@ def lambda_handler(event, context):
         "status": "OK",
         "s3_key": s3_key,
         "data": record
+
     }
